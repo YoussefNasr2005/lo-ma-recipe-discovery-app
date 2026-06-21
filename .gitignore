@@ -1,0 +1,43 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.pub-cache/
+build/
+
+# Android
+android/.gradle/
+android/app/build/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+
+# Release files
+*.apk
+*.aab
+
+# Secrets
+.env
+*.jks
+*.keystore
+key.properties
+.metadata
+
+# Coverage
+coverage/
+
+# Misc
+.DS_Store
+Thumbs.db
