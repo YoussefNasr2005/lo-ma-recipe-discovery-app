@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:small_food_app/core/networking/models/meals_model.dart';
-import 'package:small_food_app/core/networking/services/random_meal_service.dart';
-import 'package:small_food_app/core/networking/services/random_meals_service.dart';
 import 'package:small_food_app/core/styles/app_colors.dart';
 import 'package:small_food_app/core/styles/app_text_style.dart';
-import 'package:small_food_app/core/widgets/custom_futurebuilder_widget.dart';
 import 'package:small_food_app/core/widgets/main_home_card_widget.dart';
+import 'package:small_food_app/features/cubit/meal_cubit.dart';
+import 'package:small_food_app/features/cubit/meal_state.dart';
+import 'package:small_food_app/features/cubit/meals_cubit.dart';
+import 'package:small_food_app/features/cubit/meals_state.dart';
 import 'package:small_food_app/routing/app_routes.dart';
 
 class MealsHome extends StatefulWidget {
@@ -18,32 +19,12 @@ class MealsHome extends StatefulWidget {
 }
 
 class _MealsHomeState extends State<MealsHome> {
-  MealModel? meal;
   int currentIndex = 0;
-  late Future<MealsModel> _mealsFutureHome;
-  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchedRandomMeal();
-    _mealsFutureHome = RandomMealsService.searchByLetter(letter: 'a');
-  }
-
-  void fetchedRandomMeal() async {
-    try {
-      final fetchedMeal = await RandomMealService.getRandomMeal();
-      if (!mounted) return;
-      setState(() {
-        meal = fetchedMeal;
-        isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        isLoading = false;
-      });
-    }
+    context.read<MealsCubit>().getMeals('a');
   }
 
   @override
@@ -65,6 +46,8 @@ class _MealsHomeState extends State<MealsHome> {
               ),
               child: TextField(
                 onSubmitted: (value) {
+                  if (value.isEmpty) return;
+
                   GoRouter.of(
                     context,
                   ).pushNamed(AppRoutes.searchResult, extra: value);
@@ -119,33 +102,54 @@ class _MealsHomeState extends State<MealsHome> {
                         ),
                       ),
                       SizedBox(height: 20.h),
-                      GestureDetector(
-                        onTap: () {
-                          (meal == null || isLoading == true)
-                              ? null
-                              : GoRouter.of(context).pushNamed(
-                                  AppRoutes.mealDetailsScreen,
-                                  extra: meal,
-                                );
+                      BlocConsumer<MealCubit, MealState>(
+                        listener: (context, state) {
+                          if (state is MealSuccess) {
+                            GoRouter.of(context).pushNamed(
+                              AppRoutes.mealDetailsScreen,
+                              extra: state.mealModel,
+                            );
+                          }
+                          if (state is MealError) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(state.errorMesage),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          }
                         },
-                        child: Container(
-                          height: 40.h,
-                          width: 130.w,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(50.r),
-                            color: AppColors.primaryColor,
-                          ),
-                          child: Center(
-                            child: Text(
-                              'فاجئني بوجبة',
-                              style: AppTextStyle.blackMedium24.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: 20.sp,
+                        builder: (context, state) {
+                          if (state is MealLoading) {
+                            return const CircularProgressIndicator();
+                          }
+
+                          return GestureDetector(
+                            onTap: () {
+                              context.read<MealCubit>().getRandomMeal();
+                            },
+                            child: Container(
+                              height: 40.h,
+                              width: 130.w,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(50.r),
+                                color: AppColors.primaryColor,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'فاجئني بوجبة',
+                                  style: AppTextStyle.blackMedium24.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: 20.sp,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -164,10 +168,39 @@ class _MealsHomeState extends State<MealsHome> {
 
             SizedBox(height: 12.h),
             Expanded(
-              child: CustomFuturebuilderWidget(
-                mealsFutureBuilder: _mealsFutureHome,
-                mealCard: (meal) => MainHomeCardWidget(meal: meal),
-                isMainCard: true,
+              child: BlocBuilder<MealsCubit, MealsState>(
+                builder: ((context, state) {
+                  if (state is MealsLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state is MealsError) {
+                    return Center(child: Text(state.message));
+                  }
+
+                  if (state is MealsSuccess) {
+                    final meals = state.meals.meals;
+                    if (meals.isEmpty) {
+                      return const Center(
+                        child: Text('لا يوجد اي وجبات من هذا النوع.'),
+                      );
+                    } else {
+                      return GridView.builder(
+                        itemBuilder: (context, index) {
+                          return MainHomeCardWidget(meal: meals[index]);
+                        },
+                        itemCount: meals.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 30.h,
+                          mainAxisSpacing: 5.w,
+                          childAspectRatio: .8,
+                        ),
+                      );
+                    }
+                  }
+                  return const Center(child: Text('!لقد حدث شيء ما خطاء'));
+                }),
               ),
             ),
           ],

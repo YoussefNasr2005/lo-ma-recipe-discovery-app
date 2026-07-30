@@ -1,5 +1,9 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:small_food_app/core/networking/models/meals_model.dart';
+import 'package:small_food_app/features/cubit/meal_cubit.dart';
+import 'package:small_food_app/features/cubit/meals_cubit.dart';
+import 'package:small_food_app/features/cubit/search_cubit.dart';
 import 'package:small_food_app/features/screens/favourite_page.dart';
 import 'package:small_food_app/features/screens/meal_details.dart';
 import 'package:small_food_app/features/screens/meals_home.dart';
@@ -27,13 +31,21 @@ class RouterGeneration {
       GoRoute(
         path: AppRoutes.mealsHome,
         name: AppRoutes.mealsHome,
-        builder: (context, state) => const MealsHome(),
+        builder: (context, state) => MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => MealCubit()),
+            BlocProvider(create: (_) => MealsCubit()),
+          ],
+          child: const MealsHome(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.searchResult,
         name: AppRoutes.searchResult,
-        builder: (context, state) =>
-            SearchResult(searchName: state.extra as String),
+        builder: (context, state) => BlocProvider(
+          create: (context) => SearchCubit(),
+          child: SearchResult(searchName: state.extra as String),
+        ),
       ),
       GoRoute(
         path: AppRoutes.mealDetailsScreen,
