@@ -1,9 +1,10 @@
 <div align="center">
 
 # 🍔 Lo'ma
+
 ### Flutter Food Discovery App
 
-A cross-platform mobile app for discovering meals, getting random suggestions, searching recipes, and saving favorites — built on a clean, scalable architecture with a real-world REST API.
+A cross-platform Flutter application for discovering meals, searching recipes, and managing favorites — built with **flutter_bloc (Cubit)**, a scalable architecture, and a real-world REST API.
 
 <p>
   <img src="assets/images/readme/1.png" width="200" />
@@ -16,76 +17,182 @@ A cross-platform mobile app for discovering meals, getting random suggestions, s
 
 ---
 
-## 📖 Overview
+# 📖 Table of Contents
 
-Lo'ma is a fully functional food/recipe app consuming [TheMealDB API](https://www.themealdb.com/). It was built to apply solid mobile engineering practices end to end — clean separation of concerns, type-safe API models, two distinct local persistence strategies, and a navigation system with authentication guarding. The goal wasn't just screens wired to an API, but a codebase structured the way a production app would be.
-
----
-
-## ✨ Features
-
-| | |
-|---|---|
-| 🏠 **Smart Home Feed** | Random meal suggestion + browsable meal grid on launch |
-| 🔍 **Live Search** | Search recipes by name directly against the API |
-| 📖 **Meal Details** | Ingredients with measurements, full instructions, category/area, and a direct YouTube tutorial link |
-| ❤️ **Favorites** | Save/remove meals with instant UI updates, persisted across app restarts |
-| 🔐 **Auth Flow** | One-time onboarding + login-gated routing — protected screens are unreachable without signing in |
-| 🌐 **Resilient Networking** | Graceful handling of missing images, empty results, and failed requests |
+- [Overview](#-overview)
+- [Features](#-features)
+- [Engineering Highlights](#-engineering-highlights)
+- [Tech Stack](#️-tech-stack)
+- [Architecture](#-architecture)
+- [Getting Started](#-getting-started)
+- [Recent Improvements](#-recent-improvements)
+- [Author](#-author)
 
 ---
 
-## 🏗️ Engineering Highlights
+# 📖 Overview
 
-What this project focuses on is *how* it works, not just that it works.
+**Lo'ma** is a Flutter food discovery application powered by **TheMealDB API**. Originally built as an API integration project, it was later refactored to use **flutter_bloc (Cubit)**, resulting in a cleaner, more maintainable, and reactive architecture.
 
-**Layered Architecture**
-Models, services, and UI are fully decoupled — a `fromJson` parsing layer feeds a typed service layer, which feeds reusable, generic widgets. No business logic lives inside the UI.
-
-**Two Storage Strategies, Used Deliberately**
-- `SharedPreferences` for lightweight flags (e.g. first-launch state)
-- `Hive` (NoSQL, code-generated adapters) for structured favorite-meal objects, with reactive UI updates via `ValueListenableBuilder` — favorites update instantly with zero manual refresh logic
-
-**Reusable Generic Widgets**
-A single `FutureBuilder`-based widget handles loading/error/empty states across multiple screens, with the card layout injected via a builder function — one component, multiple contexts.
-
-**Route Protection with GoRouter**
-A `redirect` callback enforces auth state on *every* navigation event, not just on initial load — closing the gap where a logged-out user could otherwise deep-link directly into a protected route.
-
-**Defensive UI**
-Null/empty image URLs, malformed API responses, and real layout edge cases (RTL text, dynamic content height, overflow) are handled explicitly rather than assumed away.
+The project focuses on building a production-style Flutter application with clear separation of concerns, scalable state management, efficient local persistence, and a responsive user experience.
 
 ---
 
-## 🛠️ Tech Stack
+# ✨ Features
 
-| Layer | Tools |
-|---|---|
+| Feature | Description |
+|----------|-------------|
+| 🏠 Smart Home Feed | Displays a random featured meal alongside a browsable meals list |
+| 🎲 Random Meal Generator | Discover a completely random meal with a single tap |
+| 🔍 Live Search | Search meals by name directly from TheMealDB API |
+| 📖 Meal Details | View ingredients, measurements, cooking instructions, category, area, and a YouTube tutorial |
+| ❤️ Favorites | Save and remove favorite meals with instant UI updates using Hive |
+| 🚀 Smart App Flow | Splash screen, first-launch onboarding, and GoRouter redirects based on application state |
+| ⚡ Reactive UI | Screens automatically rebuild in response to Cubit state changes |
+| 🌐 Error Handling | Gracefully handles API failures, missing images, and empty responses |
+
+---
+
+# 🏗️ Engineering Highlights
+
+### 🧩 State Management with Cubit
+
+The networking flow was refactored from a `FutureBuilder`-based implementation to **flutter_bloc (Cubit)**.
+
+Business logic is now separated from the presentation layer, resulting in cleaner widgets, improved readability, and easier maintenance.
+
+---
+
+### 🏛 Layered Architecture
+
+The project follows a simple layered architecture consisting of:
+
+- Presentation
+- Cubits
+- Services
+- Networking
+
+Each layer has a clear responsibility, making the application easier to understand and extend.
+
+---
+
+### 🔄 Reactive State-Driven UI
+
+Instead of manually handling asynchronous operations with `FutureBuilder`, screens react automatically to emitted Cubit states.
+
+This significantly reduces duplicated asynchronous UI code and keeps widget implementations focused on presentation.
+
+---
+
+### ♻️ Reusable UI Components
+
+Reusable widgets are used throughout the application to minimize duplicated UI code and simplify screen implementation.
+
+This approach improves consistency while making the codebase easier to maintain and extend.
+
+---
+
+### 💾 Local Persistence
+
+Different storage solutions are used based on their intended purpose.
+
+| Storage | Purpose |
+|----------|----------|
+| Hive | Persist favorite meals |
+| SharedPreferences | Store first-launch state |
+
+---
+
+### 🛡️ Defensive UI
+
+The application safely handles:
+
+- Missing images
+- Empty API responses
+- Network failures
+- Dynamic content
+- RTL layouts
+
+to provide a stable user experience.
+
+---
+
+# 🛠️ Tech Stack
+
+| Layer | Technology |
+|---------|------------|
 | Framework | Flutter & Dart |
-| Navigation | GoRouter (auth-aware redirects) |
+| State Management | flutter_bloc (Cubit) |
+| Navigation | GoRouter |
 | Networking | Dio + Pretty Dio Logger |
-| Local Storage | Hive (favorites) · SharedPreferences (app flags) |
-| Images | CachedNetworkImage |
+| Local Storage | Hive + SharedPreferences |
+| Image Loading | CachedNetworkImage |
 | Responsive UI | flutter_screenutil |
 
 ---
 
-## 🚀 Getting Started
+# 🏛 Architecture
+
+```text
+Presentation (Screens)
+        │
+        ▼
+      Cubits
+        │
+        ▼
+     Services
+        │
+        ▼
+     Dio Client
+        │
+        ▼
+   TheMealDB API
+```
+
+### Layer Responsibilities
+
+- **Presentation** — Displays the user interface and reacts to Cubit states.
+- **Cubits** — Manage application state and coordinate business logic.
+- **Services** — Handle communication with the API and return parsed models.
+- **Dio Client** — Executes HTTP requests and receives responses.
+- **TheMealDB API** — Provides meal data through a REST API.
+
+---
+
+# 🚀 Getting Started
 
 ```bash
 git clone https://github.com/YoussefNasr2005/small_food_app.git
+
 cd small_food_app
+
 flutter pub get
+
 dart run build_runner build --delete-conflicting-outputs
+
 flutter run
 ```
 
 ---
 
-## 👤 Author
+# 🚀 Recent Improvements
+
+- ✅ Refactored networking from `FutureBuilder` to **flutter_bloc (Cubit)**.
+- ✅ Adopted a reactive, state-driven architecture.
+- ✅ Removed repetitive asynchronous UI code.
+- ✅ Simplified screen implementations and improved readability.
+- ✅ Improved separation between business logic and presentation.
+- ✅ Enhanced maintainability and scalability.
+- ✅ Organized state management for a cleaner project structure.
+
+---
+
+# 👨‍💻 Author
 
 **Youssef Nasr**
-Flutter Developer
+
+Flutter Developer passionate about building clean, scalable, and maintainable mobile applications.
 
 [![GitHub](https://img.shields.io/badge/GitHub-YoussefNasr2005-181717?style=flat&logo=github)](https://github.com/YoussefNasr2005)
+
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/youssef-nasr-5a3a93358)
