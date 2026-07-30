@@ -47,7 +47,7 @@ The project focuses on building a production-style Flutter application with clea
 | 🔍 Live Search | Search meals by name directly from TheMealDB API |
 | 📖 Meal Details | View ingredients, measurements, cooking instructions, category, area, and a YouTube tutorial |
 | ❤️ Favorites | Save and remove favorite meals with instant UI updates using Hive |
-| 🚀 Smart App Flow | Splash screen, first-launch onboarding, and GoRouter redirects based on application state |
+| 🚀 Smart App Flow | First-launch onboarding with SharedPreferences and GoRouter redirects |
 | ⚡ Reactive UI | Screens automatically rebuild in response to Cubit state changes |
 | 🌐 Error Handling | Gracefully handles API failures, missing images, and empty responses |
 
